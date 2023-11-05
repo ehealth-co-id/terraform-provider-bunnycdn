@@ -7,14 +7,15 @@ import (
 	"context"
 	"fmt"
 
-    "terraform-provider-bunnycdn/internal/bunnycdn_api"
-    "terraform-provider-bunnycdn/internal/model"
+	"terraform-provider-bunnycdn/internal/bunnycdn_api"
+	"terraform-provider-bunnycdn/internal/model"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
@@ -40,18 +41,32 @@ func (r *HostnameResource) Schema(ctx context.Context, req resource.SchemaReques
 		Attributes: map[string]schema.Attribute{
 			"hostname": schema.StringAttribute{
 				MarkdownDescription: "The name of the hostname.",
-				Required: true,
+				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"pullzone_id": schema.Int64Attribute{
-				Required: true,
+				Required:            true,
 				MarkdownDescription: "The ID of the pull zone",
-				PlanModifiers: []planmodifier.Int64{},
+				PlanModifiers:       []planmodifier.Int64{},
+			},
+			"enable_ssl": schema.BoolAttribute{
+				MarkdownDescription: "Sets enable SSL",
+				Computed:            true,
+				Optional:            true,
+				Default:             booldefault.StaticBool(true),
+				PlanModifiers:       []planmodifier.Bool{},
+			},
+			"force_ssl": schema.BoolAttribute{
+				MarkdownDescription: "Sets force SSL",
+				Computed:            true,
+				Optional:            true,
+				Default:             booldefault.StaticBool(true),
+				PlanModifiers:       []planmodifier.Bool{},
 			},
 			"id": schema.Int64Attribute{
-				Computed: true,
+				Computed:            true,
 				MarkdownDescription: "The ID of the pull zone",
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.UseStateForUnknown(),
@@ -93,14 +108,26 @@ func (r *HostnameResource) Create(ctx context.Context, req resource.CreateReques
 
 	err := r.api.HostnameCreate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
 	if err != nil {
-	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create hostname, got error: %s", err))
-	    return
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create hostname, got error: %s", err))
+		return
+	}
+
+	if data.EnableSsl.ValueBool() {
+		err := r.api.HostnameEnableSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
+		}
+	}
+
+	err = r.api.HostnameForceSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
 	}
 
 	remoteResource, err := r.api.HostnameGet(ctx, data.PullzoneId.ValueInt64(), data.Hostname.ValueString())
 	if err != nil {
-	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read hostname, got error: %s", err))
-	    return
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read hostname, got error: %s", err))
+		return
 	}
 
 	data = bunnycdn_api.HostnameToHostnameResourceModel(data.PullzoneId.ValueInt64(), remoteResource)
@@ -119,8 +146,8 @@ func (r *HostnameResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	remoteResource, err := r.api.HostnameGet(ctx, data.PullzoneId.ValueInt64(), data.Hostname.ValueString())
 	if err != nil {
-	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read hostname, got error: %s", err))
-	    return
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read hostname, got error: %s", err))
+		return
 	}
 
 	data = bunnycdn_api.HostnameToHostnameResourceModel(data.PullzoneId.ValueInt64(), remoteResource)
@@ -135,6 +162,18 @@ func (r *HostnameResource) Update(ctx context.Context, req resource.UpdateReques
 
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if data.EnableSsl.ValueBool() {
+		err := r.api.HostnameEnableSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
+		}
+	}
+
+	err := r.api.HostnameForceSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -152,8 +191,8 @@ func (r *HostnameResource) Delete(ctx context.Context, req resource.DeleteReques
 
 	err := r.api.HostnameDelete(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
 	if err != nil {
-	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete hostname, got error: %s", err))
-	    return
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete hostname, got error: %s", err))
+		return
 	}
 }
 

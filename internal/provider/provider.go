@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 
-    "terraform-provider-bunnycdn/internal/bunnycdn_api"
+	"terraform-provider-bunnycdn/internal/bunnycdn_api"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"

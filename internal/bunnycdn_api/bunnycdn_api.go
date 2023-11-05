@@ -1,7 +1,7 @@
 package bunnycdn_api
 
 type BunnycdnApi struct {
-    ApiKey    string
+	ApiKey string
 }
 
 func NewBunnycdnApi(apiKey string) *BunnycdnApi {
