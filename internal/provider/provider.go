@@ -54,7 +54,7 @@ func (p *BunnyCdnProvider) Configure(ctx context.Context, req provider.Configure
 
 func (p *BunnyCdnProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewPullZoneResource,
+		NewPullzoneResource,
 	}
 }
 

@@ -18,28 +18,28 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-var _ resource.Resource = &PullZoneResource{}
-var _ resource.ResourceWithImportState = &PullZoneResource{}
+var _ resource.Resource = &PullzoneResource{}
+var _ resource.ResourceWithImportState = &PullzoneResource{}
 
-func NewPullZoneResource() resource.Resource {
-	return &PullZoneResource{}
+func NewPullzoneResource() resource.Resource {
+	return &PullzoneResource{}
 }
 
-type PullZoneResource struct {
+type PullzoneResource struct {
 	api bunnycdn_api.BunnycdnApi
 }
 
-type PullZoneResourceModel struct {
+type PullzoneResourceModel struct {
 	Name                  types.String `tfsdk:"name"`
 	OriginUrl             types.String `tfsdk:"origin_url"`
 	Id                    types.Int64  `tfsdk:"id"`
 }
 
-func (r *PullZoneResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_example"
+func (r *PullzoneResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_Pullzone"
 }
 
-func (r *PullZoneResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *PullzoneResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Pull zone resource",
 
@@ -63,7 +63,7 @@ func (r *PullZoneResource) Schema(ctx context.Context, req resource.SchemaReques
 	}
 }
 
-func (r *PullZoneResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *PullzoneResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
 		return
@@ -83,24 +83,24 @@ func (r *PullZoneResource) Configure(ctx context.Context, req resource.Configure
 	r.api = api
 }
 
-func PullZoneToPullZoneResourceModel(resource *bunnycdn_api.PullZone) (PullZoneResourceModel) {
-    return PullZoneResourceModel{
+func PullzoneToPullzoneResourceModel(resource *bunnycdn_api.Pullzone) (PullzoneResourceModel) {
+    return PullzoneResourceModel{
         Id: types.Int64Value(resource.Id),
         Name: types.StringValue(resource.Name),
         OriginUrl: types.StringValue(resource.OriginUrl),
     }
 }
 
-func PullZoneResourceModelToPullZone(resource PullZoneResourceModel) (bunnycdn_api.PullZone) {
-    return bunnycdn_api.PullZone{
+func PullzoneResourceModelToPullzone(resource PullzoneResourceModel) (bunnycdn_api.Pullzone) {
+    return bunnycdn_api.Pullzone{
         Id: resource.Id.ValueInt64(),
         Name: resource.Name.ValueString(),
         OriginUrl: resource.OriginUrl.ValueString(),
     }
 }
 
-func (r *PullZoneResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data PullZoneResourceModel
+func (r *PullzoneResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data PullzoneResourceModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -109,7 +109,7 @@ func (r *PullZoneResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	createdResource, err := r.api.PullZoneCreate(bunnycdn_api.PullZone{
+	createdResource, err := r.api.PullzoneCreate(bunnycdn_api.Pullzone{
 		Name: data.Name.ValueString(),
 		OriginUrl: data.OriginUrl.ValueString(),
 	})
@@ -118,14 +118,14 @@ func (r *PullZoneResource) Create(ctx context.Context, req resource.CreateReques
 	    return
 	}
 
-	data = PullZoneToPullZoneResourceModel(createdResource)
+	data = PullzoneToPullzoneResourceModel(createdResource)
 	tflog.Trace(ctx, "created a pull zone")
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *PullZoneResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data PullZoneResourceModel
+func (r *PullzoneResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data PullzoneResourceModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -134,18 +134,18 @@ func (r *PullZoneResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
-	remoteResource, err := r.api.PullZoneGet(data.Id.ValueInt64())
+	remoteResource, err := r.api.PullzoneGet(data.Id.ValueInt64())
 	if err != nil {
 	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read pull zone, got error: %s", err))
 	    return
 	}
 
-	data = PullZoneToPullZoneResourceModel(remoteResource)
+	data = PullzoneToPullzoneResourceModel(remoteResource)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *PullZoneResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data PullZoneResourceModel
+func (r *PullzoneResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data PullzoneResourceModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -154,18 +154,18 @@ func (r *PullZoneResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	remoteResource, err := r.api.PullZoneUpdate(PullZoneResourceModelToPullZone(data))
+	remoteResource, err := r.api.PullzoneUpdate(PullzoneResourceModelToPullzone(data))
 	if err != nil {
 	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update pull zone, got error: %s", err))
 	    return
 	}
 
-	data = PullZoneToPullZoneResourceModel(remoteResource)
+	data = PullzoneToPullzoneResourceModel(remoteResource)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *PullZoneResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data PullZoneResourceModel
+func (r *PullzoneResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data PullzoneResourceModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -174,13 +174,13 @@ func (r *PullZoneResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err := r.api.PullZoneDelete(PullZoneResourceModelToPullZone(data))
+	err := r.api.PullzoneDelete(PullzoneResourceModelToPullzone(data))
 	if err != nil {
 	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete pull zone, got error: %s", err))
 	    return
 	}
 }
 
-func (r *PullZoneResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *PullzoneResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }

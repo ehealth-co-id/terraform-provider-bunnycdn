@@ -4,14 +4,14 @@ import "fmt"
 import "errors"
 import "github.com/go-resty/resty/v2"
 
-type PullZone struct {
+type Pullzone struct {
     Id        int64
     Name      string
     OriginUrl string
 }
 
-func (api *BunnycdnApi) PullZoneGet(id int64) (*PullZone, error) {
-	var resource PullZone
+func (api *BunnycdnApi) PullzoneGet(id int64) (*Pullzone, error) {
+	var resource Pullzone
 
     response, err := resty.New().R().
         SetHeader("AccessKey", api.ApiKey).
@@ -35,8 +35,8 @@ func (api *BunnycdnApi) PullZoneGet(id int64) (*PullZone, error) {
     return nil, errors.New(fmt.Sprintf("Unexpected status code %d on POST https://api.bunny.net/pullzone/", response.Status()))
 }
 
-func (api *BunnycdnApi) PullZoneCreate(resource PullZone) (*PullZone, error) {
-	var createdResource PullZone
+func (api *BunnycdnApi) PullzoneCreate(resource Pullzone) (*Pullzone, error) {
+	var createdResource Pullzone
 
     response, err := resty.New().R().
         SetHeader("Content-Type", "application/json").
@@ -61,8 +61,8 @@ func (api *BunnycdnApi) PullZoneCreate(resource PullZone) (*PullZone, error) {
     return nil, errors.New(fmt.Sprintf("Unexpected status code %d on POST https://api.bunny.net/pullzone/", response.Status()))
 }
 
-func (api *BunnycdnApi) PullZoneUpdate(resource PullZone) (*PullZone, error) {
-	var updatedResource PullZone
+func (api *BunnycdnApi) PullzoneUpdate(resource Pullzone) (*Pullzone, error) {
+	var updatedResource Pullzone
 
     response, err := resty.New().R().
         SetHeader("Content-Type", "application/json").
@@ -90,7 +90,7 @@ func (api *BunnycdnApi) PullZoneUpdate(resource PullZone) (*PullZone, error) {
     return nil, errors.New(fmt.Sprintf("Unexpected status code %d on POST https://api.bunny.net/pullzone/%d", response.Status(), resource.Id))
 }
 
-func (api *BunnycdnApi) PullZoneDelete(resource PullZone) error {
+func (api *BunnycdnApi) PullzoneDelete(resource Pullzone) error {
     response, err := resty.New().R().
         Delete(fmt.Sprintf("https://api.bunny.net/pullzone/%d", resource.Id))
 
