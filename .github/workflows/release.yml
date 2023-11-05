@@ -19,7 +19,7 @@ jobs:
 
       - name: Install and configure GoReleaser
         env:
-          GORELEASER_VERSION: '0.161.1'
+          GORELEASER_VERSION: '1.21.2'
         run: |
           curl -sL -o goreleaser_amd64.deb "https://github.com/goreleaser/goreleaser/releases/download/v${GORELEASER_VERSION}/goreleaser_amd64.deb"
           sudo dpkg -i goreleaser_amd64.deb
