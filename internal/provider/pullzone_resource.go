@@ -7,14 +7,15 @@ import (
 	"context"
 	"fmt"
 
-    "terraform-provider-bunnycdn/internal/provider/bunnycdn_api"
+    "terraform-provider-bunnycdn/internal/bunnycdn_api"
+    "terraform-provider-bunnycdn/internal/model"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
@@ -26,17 +27,11 @@ func NewPullzoneResource() resource.Resource {
 }
 
 type PullzoneResource struct {
-	api bunnycdn_api.BunnycdnApi
-}
-
-type PullzoneResourceModel struct {
-	Name                  types.String `tfsdk:"name"`
-	OriginUrl             types.String `tfsdk:"origin_url"`
-	Id                    types.Int64  `tfsdk:"id"`
+	api *bunnycdn_api.BunnycdnApi
 }
 
 func (r *PullzoneResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_Pullzone"
+	resp.TypeName = req.ProviderTypeName + "_pullzone"
 }
 
 func (r *PullzoneResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -46,17 +41,38 @@ func (r *PullzoneResource) Schema(ctx context.Context, req resource.SchemaReques
 		Attributes: map[string]schema.Attribute{
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The name of the pull zone.",
-				Optional:            false,
+				Required: true,
+				PlanModifiers: []planmodifier.String{},
 			},
 			"origin_url": schema.StringAttribute{
 				MarkdownDescription: "Sets the origin URL of the pull zone",
-				Optional:            false,
+				Required: true,
+				PlanModifiers: []planmodifier.String{},
 			},
-			"id": schema.StringAttribute{
-				Computed:            true,
+			"origin_host_header": schema.StringAttribute{
+				MarkdownDescription: "Sets the host header that will be sent to the origin",
+				Required: true,
+				PlanModifiers: []planmodifier.String{},
+			},
+			"enable_smart_cache": schema.BoolAttribute{
+				MarkdownDescription: "Sets the smart cache",
+				Computed: true,
+				Optional: true,
+				Default: booldefault.StaticBool(true),
+				PlanModifiers: []planmodifier.Bool{},
+			},
+			"disable_cookie": schema.BoolAttribute{
+				MarkdownDescription: "Sets disable cookie",
+				Computed: true,
+				Optional: true,
+				Default: booldefault.StaticBool(false),
+				PlanModifiers: []planmodifier.Bool{},
+			},
+			"id": schema.Int64Attribute{
+				Computed: true,
 				MarkdownDescription: "The ID of the pull zone",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
 				},
 			},
 		},
@@ -69,12 +85,12 @@ func (r *PullzoneResource) Configure(ctx context.Context, req resource.Configure
 		return
 	}
 
-	api, ok := req.ProviderData.(bunnycdn_api.BunnycdnApi)
+	api, ok := req.ProviderData.(*bunnycdn_api.BunnycdnApi)
 
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *bunnycdn_api.BunnycdnApi, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected bunnycdn_api.BunnycdnApi, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -83,24 +99,8 @@ func (r *PullzoneResource) Configure(ctx context.Context, req resource.Configure
 	r.api = api
 }
 
-func PullzoneToPullzoneResourceModel(resource *bunnycdn_api.Pullzone) (PullzoneResourceModel) {
-    return PullzoneResourceModel{
-        Id: types.Int64Value(resource.Id),
-        Name: types.StringValue(resource.Name),
-        OriginUrl: types.StringValue(resource.OriginUrl),
-    }
-}
-
-func PullzoneResourceModelToPullzone(resource PullzoneResourceModel) (bunnycdn_api.Pullzone) {
-    return bunnycdn_api.Pullzone{
-        Id: resource.Id.ValueInt64(),
-        Name: resource.Name.ValueString(),
-        OriginUrl: resource.OriginUrl.ValueString(),
-    }
-}
-
 func (r *PullzoneResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data PullzoneResourceModel
+	var data model.PullzoneResourceModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -109,23 +109,20 @@ func (r *PullzoneResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	createdResource, err := r.api.PullzoneCreate(bunnycdn_api.Pullzone{
-		Name: data.Name.ValueString(),
-		OriginUrl: data.OriginUrl.ValueString(),
-	})
+	createdResource, err := r.api.PullzoneCreate(ctx, bunnycdn_api.PullzoneResourceModelToPullzone(data))
 	if err != nil {
-	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create pull zone, got error: %s", err))
+	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete pull zone, got error: %s", err))
 	    return
 	}
 
-	data = PullzoneToPullzoneResourceModel(createdResource)
+	data = bunnycdn_api.PullzoneToPullzoneResourceModel(createdResource)
 	tflog.Trace(ctx, "created a pull zone")
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *PullzoneResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data PullzoneResourceModel
+	var data model.PullzoneResourceModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -134,18 +131,23 @@ func (r *PullzoneResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
-	remoteResource, err := r.api.PullzoneGet(data.Id.ValueInt64())
+	remoteResource, err := r.api.PullzoneGet(ctx, data.Id.ValueInt64())
 	if err != nil {
-	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read pull zone, got error: %s", err))
+		pullzoneError, ok := err.(*model.PullzoneError)
+		if ok && pullzoneError.StatusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete pull zone, got error: %s", err))
 	    return
 	}
 
-	data = PullzoneToPullzoneResourceModel(remoteResource)
+	data = bunnycdn_api.PullzoneToPullzoneResourceModel(remoteResource)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *PullzoneResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data PullzoneResourceModel
+	var data model.PullzoneResourceModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -154,18 +156,18 @@ func (r *PullzoneResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	remoteResource, err := r.api.PullzoneUpdate(PullzoneResourceModelToPullzone(data))
+	remoteResource, err := r.api.PullzoneUpdate(ctx, bunnycdn_api.PullzoneResourceModelToPullzone(data))
 	if err != nil {
-	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update pull zone, got error: %s", err))
+	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete pull zone, got error: %s", err))
 	    return
 	}
 
-	data = PullzoneToPullzoneResourceModel(remoteResource)
+	data = bunnycdn_api.PullzoneToPullzoneResourceModel(remoteResource)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *PullzoneResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data PullzoneResourceModel
+	var data model.PullzoneResourceModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -174,7 +176,7 @@ func (r *PullzoneResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err := r.api.PullzoneDelete(PullzoneResourceModelToPullzone(data))
+	err := r.api.PullzoneDelete(ctx, bunnycdn_api.PullzoneResourceModelToPullzone(data))
 	if err != nil {
 	    resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete pull zone, got error: %s", err))
 	    return

@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 
-    "terraform-provider-bunnycdn/internal/provider/bunnycdn_api"
+    "terraform-provider-bunnycdn/internal/bunnycdn_api"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -47,7 +47,7 @@ func (p *BunnyCdnProvider) Configure(ctx context.Context, req provider.Configure
 		return
 	}
 
-	api := bunnycdn_api.NewBunnycdnApi(data.ApiKey.String())
+	api := bunnycdn_api.NewBunnycdnApi(data.ApiKey.ValueString())
 	resp.DataSourceData = api
 	resp.ResourceData = api
 }
@@ -55,6 +55,7 @@ func (p *BunnyCdnProvider) Configure(ctx context.Context, req provider.Configure
 func (p *BunnyCdnProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewPullzoneResource,
+		NewHostnameResource,
 	}
 }
 
