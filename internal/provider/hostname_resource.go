@@ -112,18 +112,7 @@ func (r *HostnameResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	if data.EnableSsl.ValueBool() {
-		err := r.api.HostnameEnableSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
-		if err != nil {
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
-		}
-	}
-
-	err = r.api.HostnameForceSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
-	}
-
+	// get and update state after create
 	remoteResource, err := r.api.HostnameGet(ctx, data.PullzoneId.ValueInt64(), data.Hostname.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read hostname, got error: %s", err))
@@ -132,6 +121,28 @@ func (r *HostnameResource) Create(ctx context.Context, req resource.CreateReques
 
 	data = bunnycdn_api.HostnameToHostnameResourceModel(data.PullzoneId.ValueInt64(), remoteResource)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+	if data.EnableSsl.ValueBool() {
+		err := r.api.HostnameEnableSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+		if err != nil {
+			resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
+		}
+
+		err = r.api.HostnameUpdateForceSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+		if err != nil {
+			resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to update force_ssl, got error: %s", err))
+		}
+
+		// get and update state after updates enable_ssl and force_ssl
+		remoteResource, err = r.api.HostnameGet(ctx, data.PullzoneId.ValueInt64(), data.Hostname.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read hostname, got error: %s", err))
+			return
+		}
+
+		data = bunnycdn_api.HostnameToHostnameResourceModel(data.PullzoneId.ValueInt64(), remoteResource)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	}
 }
 
 func (r *HostnameResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -155,9 +166,9 @@ func (r *HostnameResource) Read(ctx context.Context, req resource.ReadRequest, r
 }
 
 func (r *HostnameResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data model.HostnameResourceModel
+	var data, state model.HostnameResourceModel
 
-	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -165,18 +176,28 @@ func (r *HostnameResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	if data.EnableSsl.ValueBool() {
-		err := r.api.HostnameEnableSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
-		if err != nil {
-			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
+		if !state.EnableSsl.ValueBool() {
+			err := r.api.HostnameEnableSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
+			}
 		}
-	}
 
-	err := r.api.HostnameForceSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
-	}
+		err := r.api.HostnameUpdateForceSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+		if err != nil {
+			resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to update force_ssl, got error: %s", err))
+		}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		// get and update state after updates enable_ssl and force_ssl
+		remoteResource, err := r.api.HostnameGet(ctx, data.PullzoneId.ValueInt64(), data.Hostname.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read hostname, got error: %s", err))
+			return
+		}
+
+		data = bunnycdn_api.HostnameToHostnameResourceModel(data.PullzoneId.ValueInt64(), remoteResource)
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	}
 }
 
 func (r *HostnameResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

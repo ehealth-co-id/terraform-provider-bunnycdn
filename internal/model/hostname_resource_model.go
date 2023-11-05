@@ -45,18 +45,20 @@ func (e *HostnameError) Error() string {
 type EnableSslError struct {
 	StatusCode int
 	Hostname   string
+	Body       string
 }
 
-func NewEnableSslError(statusCode int, hostname string) *EnableSslError {
+func NewEnableSslError(statusCode int, hostname string, body string) *EnableSslError {
 	return &EnableSslError{
 		StatusCode: statusCode,
 		Hostname:   hostname,
+		Body:       body,
 	}
 }
 
 func (e *EnableSslError) Error() string {
 	if e.StatusCode == 400 {
-		return "Failed configuring the certificate"
+		return fmt.Sprintf("Failed configuring free certificate. response: %s", e.Body)
 	}
 	if e.StatusCode == 401 {
 		return "Request authorization failed"

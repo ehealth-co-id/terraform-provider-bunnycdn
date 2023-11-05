@@ -115,10 +115,10 @@ func (api *BunnycdnApi) HostnameEnableSsl(ctx context.Context, pullzoneId int64,
 		return nil
 	}
 
-	return model.NewEnableSslError(response.StatusCode(), resource.Hostname)
+	return model.NewEnableSslError(response.StatusCode(), resource.Hostname, string(response.Body()))
 }
 
-func (api *BunnycdnApi) HostnameForceSsl(ctx context.Context, pullzoneId int64, resource Hostname) error {
+func (api *BunnycdnApi) HostnameUpdateForceSsl(ctx context.Context, pullzoneId int64, resource Hostname) error {
 	response, err := resty.New().R().
 		SetContext(ctx).
 		SetHeader("Content-Type", "application/json").
@@ -137,5 +137,5 @@ func (api *BunnycdnApi) HostnameForceSsl(ctx context.Context, pullzoneId int64, 
 		return nil
 	}
 
-	return model.NewEnableSslError(response.StatusCode(), resource.Hostname)
+	return model.NewEnableSslError(response.StatusCode(), resource.Hostname, string(response.Body()))
 }
