@@ -51,7 +51,7 @@ func (r *PullzoneResource) Schema(ctx context.Context, req resource.SchemaReques
 			},
 			"origin_host_header": schema.StringAttribute{
 				MarkdownDescription: "Sets the host header that will be sent to the origin",
-				Required:            true,
+				Optional:            true,
 				PlanModifiers:       []planmodifier.String{},
 			},
 			"enable_smart_cache": schema.BoolAttribute{

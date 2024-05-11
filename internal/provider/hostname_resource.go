@@ -5,6 +5,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"terraform-provider-bunnycdn/internal/bunnycdn_api"
@@ -28,6 +29,11 @@ func NewHostnameResource() resource.Resource {
 
 type HostnameResource struct {
 	api *bunnycdn_api.BunnycdnApi
+}
+
+type Certificate struct {
+	Certificate    *string `json:"Certificate"`
+	CertificateKey *string `json:"CertificateKey"`
 }
 
 func (r *HostnameResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -72,6 +78,18 @@ func (r *HostnameResource) Schema(ctx context.Context, req resource.SchemaReques
 					int64planmodifier.UseStateForUnknown(),
 				},
 			},
+			"certificate": schema.StringAttribute{
+				MarkdownDescription: "Hostname custom certificate",
+				Optional:            true,
+				Sensitive:           true,
+				PlanModifiers:       []planmodifier.String{},
+			},
+			"certificate_key": schema.StringAttribute{
+				MarkdownDescription: "Hostname custom certificate key",
+				Optional:            true,
+				Sensitive:           true,
+				PlanModifiers:       []planmodifier.String{},
+			},
 		},
 	}
 }
@@ -113,9 +131,25 @@ func (r *HostnameResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	if data.EnableSsl.ValueBool() {
-		err := r.api.HostnameEnableSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
-		if err != nil {
-			resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
+		if data.Certificate.ValueStringPointer() == nil {
+			err := r.api.HostnameLoadFreeCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
+			}
+		} else {
+			err := r.api.HostnameAddCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to add certificate, got error: %s", err))
+			}
+			certificateEncoded, err := json.Marshal(Certificate{
+				Certificate:    data.Certificate.ValueStringPointer(),
+				CertificateKey: data.CertificateKey.ValueStringPointer(),
+			})
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Failed to encode certificate to json: %s", err))
+			}
+			addCertificate := resp.Private.SetKey(ctx, "certificate", certificateEncoded)
+			resp.Diagnostics.Append(addCertificate...)
 		}
 
 		err = r.api.HostnameUpdateForceSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
@@ -129,6 +163,11 @@ func (r *HostnameResource) Create(ctx context.Context, req resource.CreateReques
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read hostname, got error: %s", err))
 		return
+	}
+
+	if data.EnableSsl.ValueBool() && data.Certificate.ValueStringPointer() != nil {
+		remoteResource.Certificate = data.Certificate.ValueStringPointer()
+		remoteResource.CertificateKey = data.CertificateKey.ValueStringPointer()
 	}
 
 	data = bunnycdn_api.HostnameToHostnameResourceModel(data.PullzoneId.ValueInt64(), remoteResource)
@@ -151,6 +190,18 @@ func (r *HostnameResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
+	certificateEncoded, getCertificate := req.Private.GetKey(ctx, "certificate")
+	resp.Diagnostics.Append(getCertificate...)
+	if certificateEncoded != nil {
+		var certificate Certificate
+		err := json.Unmarshal(certificateEncoded, &certificate)
+		if err != nil {
+			resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Failed to decode certificate from json: %s", err))
+		}
+		remoteResource.Certificate = certificate.Certificate
+		remoteResource.CertificateKey = certificate.CertificateKey
+	}
+
 	data = bunnycdn_api.HostnameToHostnameResourceModel(data.PullzoneId.ValueInt64(), remoteResource)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -167,9 +218,25 @@ func (r *HostnameResource) Update(ctx context.Context, req resource.UpdateReques
 
 	if data.EnableSsl.ValueBool() {
 		if !state.EnableSsl.ValueBool() {
-			err := r.api.HostnameEnableSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
-			if err != nil {
-				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
+			if data.Certificate.ValueStringPointer() == nil {
+				err := r.api.HostnameLoadFreeCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+				if err != nil {
+					resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
+				}
+			} else {
+				err := r.api.HostnameAddCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+				if err != nil {
+					resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to add certificate, got error: %s", err))
+				}
+				certificateEncoded, err := json.Marshal(Certificate{
+					Certificate:    data.Certificate.ValueStringPointer(),
+					CertificateKey: data.CertificateKey.ValueStringPointer(),
+				})
+				if err != nil {
+					resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Failed to encode certificate to json: %s", err))
+				}
+				addCertificate := resp.Private.SetKey(ctx, "certificate", certificateEncoded)
+				resp.Diagnostics.Append(addCertificate...)
 			}
 		}
 
@@ -183,6 +250,11 @@ func (r *HostnameResource) Update(ctx context.Context, req resource.UpdateReques
 		if err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read hostname, got error: %s", err))
 			return
+		}
+
+		if data.EnableSsl.ValueBool() && data.Certificate.ValueStringPointer() != nil {
+			remoteResource.Certificate = data.Certificate.ValueStringPointer()
+			remoteResource.CertificateKey = data.CertificateKey.ValueStringPointer()
 		}
 
 		data = bunnycdn_api.HostnameToHostnameResourceModel(data.PullzoneId.ValueInt64(), remoteResource)

@@ -11,28 +11,34 @@ import (
 )
 
 type Hostname struct {
-	Id        int64  `json:"Id"`
-	Hostname  string `json:"Hostname"`
-	ForceSsl  bool   `json:"ForceSSL"`
-	EnableSsl bool
+	Id             int64  `json:"Id"`
+	Hostname       string `json:"Hostname"`
+	ForceSsl       bool   `json:"ForceSSL"`
+	EnableSsl      bool
+	Certificate    *string
+	CertificateKey *string
 }
 
 func HostnameToHostnameResourceModel(pullzoneId int64, resource *Hostname) model.HostnameResourceModel {
 	return model.HostnameResourceModel{
-		PullzoneId: types.Int64Value(pullzoneId),
-		Id:         types.Int64Value(resource.Id),
-		Hostname:   types.StringValue(resource.Hostname),
-		EnableSsl:  types.BoolValue(resource.EnableSsl),
-		ForceSsl:   types.BoolValue(resource.ForceSsl),
+		PullzoneId:     types.Int64Value(pullzoneId),
+		Id:             types.Int64Value(resource.Id),
+		Hostname:       types.StringValue(resource.Hostname),
+		EnableSsl:      types.BoolValue(resource.EnableSsl),
+		ForceSsl:       types.BoolValue(resource.ForceSsl),
+		Certificate:    types.StringPointerValue(resource.Certificate),
+		CertificateKey: types.StringPointerValue(resource.CertificateKey),
 	}
 }
 
 func HostnameResourceModelToHostname(resource model.HostnameResourceModel) Hostname {
 	return Hostname{
-		Id:        resource.Id.ValueInt64(),
-		Hostname:  resource.Hostname.ValueString(),
-		EnableSsl: resource.EnableSsl.ValueBool(),
-		ForceSsl:  resource.ForceSsl.ValueBool(),
+		Id:             resource.Id.ValueInt64(),
+		Hostname:       resource.Hostname.ValueString(),
+		EnableSsl:      resource.EnableSsl.ValueBool(),
+		ForceSsl:       resource.ForceSsl.ValueBool(),
+		Certificate:    resource.Certificate.ValueStringPointer(),
+		CertificateKey: resource.CertificateKey.ValueStringPointer(),
 	}
 }
 
@@ -97,7 +103,7 @@ func (api *BunnycdnApi) HostnameDelete(ctx context.Context, pullzoneId int64, re
 	return model.NewHostnameError(response.StatusCode(), resource.Hostname)
 }
 
-func (api *BunnycdnApi) HostnameEnableSsl(ctx context.Context, pullzoneId int64, resource Hostname) error {
+func (api *BunnycdnApi) HostnameLoadFreeCertificate(ctx context.Context, pullzoneId int64, resource Hostname) error {
 	response, err := resty.New().R().
 		SetContext(ctx).
 		SetHeader("Content-Type", "application/json").
@@ -112,6 +118,29 @@ func (api *BunnycdnApi) HostnameEnableSsl(ctx context.Context, pullzoneId int64,
 	}
 
 	if response.StatusCode() == 200 {
+		return nil
+	}
+
+	return model.NewEnableSslError(response.StatusCode(), resource.Hostname, string(response.Body()))
+}
+
+func (api *BunnycdnApi) HostnameAddCertificate(ctx context.Context, pullzoneId int64, resource Hostname) error {
+	response, err := resty.New().R().
+		SetContext(ctx).
+		SetHeader("Content-Type", "application/json").
+		SetHeader("AccessKey", api.ApiKey).
+		SetBody(map[string]interface{}{
+			"Hostname":       resource.Hostname,
+			"Certificate":    resource.Certificate,
+			"CertificateKey": resource.CertificateKey,
+		}).
+		Post(fmt.Sprintf("https://api.bunny.net/pullzone/%d/addCertificate", pullzoneId))
+
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode() == 204 {
 		return nil
 	}
 

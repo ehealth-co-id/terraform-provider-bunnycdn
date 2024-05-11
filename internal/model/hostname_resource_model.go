@@ -7,11 +7,13 @@ import (
 )
 
 type HostnameResourceModel struct {
-	PullzoneId types.Int64  `tfsdk:"pullzone_id"`
-	Id         types.Int64  `tfsdk:"id"`
-	Hostname   types.String `tfsdk:"hostname"`
-	EnableSsl  types.Bool   `tfsdk:"enable_ssl"`
-	ForceSsl   types.Bool   `tfsdk:"force_ssl"`
+	PullzoneId     types.Int64  `tfsdk:"pullzone_id"`
+	Id             types.Int64  `tfsdk:"id"`
+	Hostname       types.String `tfsdk:"hostname"`
+	EnableSsl      types.Bool   `tfsdk:"enable_ssl"`
+	ForceSsl       types.Bool   `tfsdk:"force_ssl"`
+	Certificate    types.String `tfsdk:"certificate"`
+	CertificateKey types.String `tfsdk:"certificate_key"`
 }
 
 type HostnameError struct {
