@@ -217,27 +217,63 @@ func (r *HostnameResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	if data.EnableSsl.ValueBool() {
-		if !state.EnableSsl.ValueBool() {
-			if data.Certificate.ValueStringPointer() == nil {
-				err := r.api.HostnameLoadFreeCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
-				if err != nil {
-					resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
-				}
-			} else {
-				err := r.api.HostnameAddCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
-				if err != nil {
-					resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to add certificate, got error: %s", err))
-				}
-				certificateEncoded, err := json.Marshal(Certificate{
-					Certificate:    data.Certificate.ValueStringPointer(),
-					CertificateKey: data.CertificateKey.ValueStringPointer(),
-				})
-				if err != nil {
-					resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Failed to encode certificate to json: %s", err))
-				}
-				addCertificate := resp.Private.SetKey(ctx, "certificate", certificateEncoded)
-				resp.Diagnostics.Append(addCertificate...)
+		if state.EnableSsl.ValueBool() && state.Certificate.ValueStringPointer() == nil && data.Certificate.ValueStringPointer() != nil {
+			err := r.api.HostnameDeleteCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to delete certificate, got error: %s", err))
 			}
+			err = r.api.HostnameAddCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to add certificate, got error: %s", err))
+			}
+			certificateEncoded, err := json.Marshal(Certificate{
+				Certificate:    data.Certificate.ValueStringPointer(),
+				CertificateKey: data.CertificateKey.ValueStringPointer(),
+			})
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Failed to encode certificate to json: %s", err))
+			}
+			addCertificate := resp.Private.SetKey(ctx, "certificate", certificateEncoded)
+			resp.Diagnostics.Append(addCertificate...)
+		}
+
+		if state.EnableSsl.ValueBool() && state.Certificate.ValueStringPointer() != nil && data.Certificate.ValueStringPointer() == nil {
+			err := r.api.HostnameDeleteCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to delete certificate, got error: %s", err))
+			}
+			certificateEncoded, err := json.Marshal(Certificate{Certificate: nil, CertificateKey: nil})
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Failed to encode certificate to json: %s", err))
+			}
+			addCertificate := resp.Private.SetKey(ctx, "certificate", certificateEncoded)
+			resp.Diagnostics.Append(addCertificate...)
+
+			err = r.api.HostnameLoadFreeCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
+			}
+		}
+		if !state.EnableSsl.ValueBool() && data.Certificate.ValueStringPointer() == nil {
+			err := r.api.HostnameLoadFreeCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to load free certificate, got error: %s", err))
+			}
+		}
+		if !state.EnableSsl.ValueBool() && data.Certificate.ValueStringPointer() != nil {
+			err := r.api.HostnameAddCertificate(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Unable to add certificate, got error: %s", err))
+			}
+			certificateEncoded, err := json.Marshal(Certificate{
+				Certificate:    data.Certificate.ValueStringPointer(),
+				CertificateKey: data.CertificateKey.ValueStringPointer(),
+			})
+			if err != nil {
+				resp.Diagnostics.AddWarning("Client Error", fmt.Sprintf("Failed to encode certificate to json: %s", err))
+			}
+			addCertificate := resp.Private.SetKey(ctx, "certificate", certificateEncoded)
+			resp.Diagnostics.Append(addCertificate...)
 		}
 
 		err := r.api.HostnameUpdateForceSsl(ctx, data.PullzoneId.ValueInt64(), bunnycdn_api.HostnameResourceModelToHostname(data))

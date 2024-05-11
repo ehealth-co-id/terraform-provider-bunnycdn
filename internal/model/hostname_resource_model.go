@@ -73,3 +73,33 @@ func (e *EnableSslError) Error() string {
 	}
 	return fmt.Sprintf("Unexpected status code %d", e.StatusCode)
 }
+
+type DeleteCertificateError struct {
+	StatusCode int
+	Hostname   string
+	Body       string
+}
+
+func NewDeleteCertificateError(statusCode int, hostname string, body string) *DeleteCertificateError {
+	return &DeleteCertificateError{
+		StatusCode: statusCode,
+		Hostname:   hostname,
+		Body:       body,
+	}
+}
+
+func (e *DeleteCertificateError) Error() string {
+	if e.StatusCode == 400 {
+		return fmt.Sprintf("Failed removing certificate. response: %s", e.Body)
+	}
+	if e.StatusCode == 401 {
+		return "Request authorization failed"
+	}
+	if e.StatusCode == 404 {
+		return fmt.Sprintf("Hostname %s does not exist", e.Hostname)
+	}
+	if e.StatusCode >= 500 {
+		return fmt.Sprintf("Bunnycdn server error. status code: %d", e.StatusCode)
+	}
+	return fmt.Sprintf("Unexpected status code %d", e.StatusCode)
+}

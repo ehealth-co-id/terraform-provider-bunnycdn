@@ -168,3 +168,24 @@ func (api *BunnycdnApi) HostnameUpdateForceSsl(ctx context.Context, pullzoneId i
 
 	return model.NewEnableSslError(response.StatusCode(), resource.Hostname, string(response.Body()))
 }
+
+func (api *BunnycdnApi) HostnameDeleteCertificate(ctx context.Context, pullzoneId int64, resource Hostname) error {
+	response, err := resty.New().R().
+		SetContext(ctx).
+		SetHeader("Content-Type", "application/json").
+		SetHeader("AccessKey", api.ApiKey).
+		SetBody(map[string]interface{}{
+			"Hostname": resource.Hostname,
+		}).
+		Delete(fmt.Sprintf("https://api.bunny.net/pullzone/%d/removeCertificate", pullzoneId))
+
+	if err != nil {
+		return err
+	}
+
+	if response.StatusCode() == 204 {
+		return nil
+	}
+
+	return model.NewDeleteCertificateError(response.StatusCode(), resource.Hostname, string(response.Body()))
+}
