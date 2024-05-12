@@ -9,6 +9,8 @@ import (
 type PullzoneResourceModel struct {
 	Id               types.Int64  `tfsdk:"id"`
 	Name             types.String `tfsdk:"name"`
+	OriginType       types.Int64  `tfsdk:"origin_type"`
+	StorageZoneId    types.Int64  `tfsdk:"storage_zone_id"`
 	OriginUrl        types.String `tfsdk:"origin_url"`
 	OriginHostHeader types.String `tfsdk:"origin_host_header"`
 	EnableSmartCache types.Bool   `tfsdk:"enable_smart_cache"`

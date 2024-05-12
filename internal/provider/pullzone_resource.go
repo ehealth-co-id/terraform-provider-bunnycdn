@@ -10,10 +10,12 @@ import (
 	"terraform-provider-bunnycdn/internal/bunnycdn_api"
 	"terraform-provider-bunnycdn/internal/model"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -44,9 +46,21 @@ func (r *PullzoneResource) Schema(ctx context.Context, req resource.SchemaReques
 				Required:            true,
 				PlanModifiers:       []planmodifier.String{},
 			},
+			"origin_type": schema.Int64Attribute{
+				MarkdownDescription: "Sets the origin type of the pull zone (0 = OriginUrl, 2 = StorageZone)",
+				Optional:            true,
+				Computed:            true,
+				Default:             int64default.StaticInt64(0),
+				PlanModifiers:       []planmodifier.Int64{},
+			},
+			"storage_zone_id": schema.Int64Attribute{
+				MarkdownDescription: "The ID of the storage zone that will be used as the origin",
+				Optional:            true,
+				PlanModifiers:       []planmodifier.Int64{},
+			},
 			"origin_url": schema.StringAttribute{
 				MarkdownDescription: "Sets the origin URL of the pull zone",
-				Required:            true,
+				Optional:            true,
 				PlanModifiers:       []planmodifier.String{},
 			},
 			"origin_host_header": schema.StringAttribute{
@@ -99,11 +113,24 @@ func (r *PullzoneResource) Configure(ctx context.Context, req resource.Configure
 	r.api = api
 }
 
+func (r *PullzoneResource) Validate(ctx context.Context, data model.PullzoneResourceModel, diagnostics *diag.Diagnostics) {
+	if data.OriginType.ValueInt64() != 0 && data.OriginType.ValueInt64() != 2 {
+		diagnostics.AddError("Validation Error", "origin_type is not implemented")
+	}
+	if data.OriginType.ValueInt64() == 0 && data.OriginUrl.ValueStringPointer() == nil {
+		diagnostics.AddError("Validation Error", "when origin_type = 0 origin_type must not be null")
+	}
+	if data.OriginType.ValueInt64() == 2 && data.StorageZoneId.ValueInt64Pointer() == nil {
+		diagnostics.AddError("Validation Error", "when origin_type = 2 storage_zone_id must not be null")
+	}
+}
+
 func (r *PullzoneResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data model.PullzoneResourceModel
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	r.Validate(ctx, data, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -111,7 +138,7 @@ func (r *PullzoneResource) Create(ctx context.Context, req resource.CreateReques
 
 	createdResource, err := r.api.PullzoneCreate(ctx, bunnycdn_api.PullzoneResourceModelToPullzone(data))
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete pull zone, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create pull zone, got error: %s", err))
 		return
 	}
 
@@ -151,6 +178,7 @@ func (r *PullzoneResource) Update(ctx context.Context, req resource.UpdateReques
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	r.Validate(ctx, data, &resp.Diagnostics)
 
 	if resp.Diagnostics.HasError() {
 		return
