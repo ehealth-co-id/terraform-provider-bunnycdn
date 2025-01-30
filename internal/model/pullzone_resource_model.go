@@ -15,6 +15,8 @@ type PullzoneResourceModel struct {
 	OriginHostHeader types.String `tfsdk:"origin_host_header"`
 	EnableSmartCache types.Bool   `tfsdk:"enable_smart_cache"`
 	DisableCookies   types.Bool   `tfsdk:"disable_cookie"`
+	ErrorPageEnableCustomCode	types.Bool		`tfsdk:"error_page_enable_custom_code"`
+	ErrorPageCustomCode			types.String	`tfsdk:"error_page_custom_code"`
 }
 
 type PullzoneError struct {
