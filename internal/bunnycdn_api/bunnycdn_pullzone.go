@@ -29,7 +29,7 @@ type Pullzone struct {
 	DisableCookies            bool               `json:"DisableCookies"`
 	Hostnames                 []PullzoneHostname `json:"Hostnames"`
 	ErrorPageEnableCustomCode bool               `json:"ErrorPageEnableCustomCode"`
-	ErrorPageCustomCode       string             `json:"ErrorPageCustomCode"`
+	ErrorPageCustomCode       *string            `json:"ErrorPageCustomCode"`
 }
 
 func ifEmptyThenNil(value *string) *string {
