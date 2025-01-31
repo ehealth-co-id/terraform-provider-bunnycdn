@@ -4,12 +4,12 @@
 package main
 
 import (
-    "context"
-    "flag"
-    "log"
+	"context"
+	"flag"
+	"log"
 
-    "github.com/hashicorp/terraform-plugin-framework/providerserver"
-    "terraform-provider-bunnycdn/internal/provider"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"terraform-provider-bunnycdn/internal/provider"
 )
 
 var (

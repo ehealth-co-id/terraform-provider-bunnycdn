@@ -82,6 +82,18 @@ func (r *PullzoneResource) Schema(ctx context.Context, req resource.SchemaReques
 				Default:             booldefault.StaticBool(false),
 				PlanModifiers:       []planmodifier.Bool{},
 			},
+			"error_page_enable_custom_code": schema.BoolAttribute{
+				MarkdownDescription: "Sets enable custom error page",
+				Computed:            true,
+				Optional:            true,
+				Default:             booldefault.StaticBool(false),
+				PlanModifiers:       []planmodifier.Bool{},
+			},
+			"error_page_custom_code": schema.StringAttribute{
+				MarkdownDescription: "Sets template custom error page",
+				Optional:            true,
+				PlanModifiers:       []planmodifier.String{},
+			},
 			"id": schema.Int64Attribute{
 				Computed:            true,
 				MarkdownDescription: "The ID of the pull zone",

@@ -7,14 +7,16 @@ import (
 )
 
 type PullzoneResourceModel struct {
-	Id               types.Int64  `tfsdk:"id"`
-	Name             types.String `tfsdk:"name"`
-	OriginType       types.Int64  `tfsdk:"origin_type"`
-	StorageZoneId    types.Int64  `tfsdk:"storage_zone_id"`
-	OriginUrl        types.String `tfsdk:"origin_url"`
-	OriginHostHeader types.String `tfsdk:"origin_host_header"`
-	EnableSmartCache types.Bool   `tfsdk:"enable_smart_cache"`
-	DisableCookies   types.Bool   `tfsdk:"disable_cookie"`
+	Id                        types.Int64  `tfsdk:"id"`
+	Name                      types.String `tfsdk:"name"`
+	OriginType                types.Int64  `tfsdk:"origin_type"`
+	StorageZoneId             types.Int64  `tfsdk:"storage_zone_id"`
+	OriginUrl                 types.String `tfsdk:"origin_url"`
+	OriginHostHeader          types.String `tfsdk:"origin_host_header"`
+	EnableSmartCache          types.Bool   `tfsdk:"enable_smart_cache"`
+	DisableCookies            types.Bool   `tfsdk:"disable_cookie"`
+	ErrorPageEnableCustomCode types.Bool   `tfsdk:"error_page_enable_custom_code"`
+	ErrorPageCustomCode       types.String `tfsdk:"error_page_custom_code"`
 }
 
 type PullzoneError struct {

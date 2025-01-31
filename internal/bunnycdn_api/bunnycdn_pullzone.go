@@ -17,17 +17,19 @@ type PullzoneHostname struct {
 }
 
 type Pullzone struct {
-	Id               int64              `json:"Id"`
-	Name             string             `json:"Name"`
-	OriginType       int64              `json:"OriginType"`
-	StorageZoneId    *int64             `json:"StorageZoneId"`
-	OriginUrl        *string            `json:"OriginUrl"`
-	OriginHostHeader *string            `json:"OriginHostHeader"`
-	EnableTLS1       bool               `json:"EnableTLS1"`
-	EnableTLS1_1     bool               `json:"EnableTLS1_1"`
-	EnableSmartCache bool               `json:"EnableSmartCache"`
-	DisableCookies   bool               `json:"DisableCookies"`
-	Hostnames        []PullzoneHostname `json:"Hostnames"`
+	Id                        int64              `json:"Id"`
+	Name                      string             `json:"Name"`
+	OriginType                int64              `json:"OriginType"`
+	StorageZoneId             *int64             `json:"StorageZoneId"`
+	OriginUrl                 *string            `json:"OriginUrl"`
+	OriginHostHeader          *string            `json:"OriginHostHeader"`
+	EnableTLS1                bool               `json:"EnableTLS1"`
+	EnableTLS1_1              bool               `json:"EnableTLS1_1"`
+	EnableSmartCache          bool               `json:"EnableSmartCache"`
+	DisableCookies            bool               `json:"DisableCookies"`
+	Hostnames                 []PullzoneHostname `json:"Hostnames"`
+	ErrorPageEnableCustomCode bool               `json:"ErrorPageEnableCustomCode"`
+	ErrorPageCustomCode       string             `json:"ErrorPageCustomCode"`
 }
 
 func ifEmptyThenNil(value *string) *string {
@@ -47,29 +49,33 @@ func ifZeroThenNil(value *int64) *int64 {
 func PullzoneToPullzoneResourceModel(resource *Pullzone) model.PullzoneResourceModel {
 
 	return model.PullzoneResourceModel{
-		Id:               types.Int64Value(resource.Id),
-		Name:             types.StringValue(resource.Name),
-		OriginType:       types.Int64Value(resource.OriginType),
-		StorageZoneId:    types.Int64PointerValue(ifZeroThenNil(resource.StorageZoneId)),
-		OriginUrl:        types.StringPointerValue(ifEmptyThenNil(resource.OriginUrl)),
-		EnableSmartCache: types.BoolValue(resource.EnableSmartCache),
-		DisableCookies:   types.BoolValue(resource.DisableCookies),
-		OriginHostHeader: types.StringPointerValue(ifEmptyThenNil(resource.OriginHostHeader)),
+		Id:                        types.Int64Value(resource.Id),
+		Name:                      types.StringValue(resource.Name),
+		OriginType:                types.Int64Value(resource.OriginType),
+		StorageZoneId:             types.Int64PointerValue(ifZeroThenNil(resource.StorageZoneId)),
+		OriginUrl:                 types.StringPointerValue(ifEmptyThenNil(resource.OriginUrl)),
+		EnableSmartCache:          types.BoolValue(resource.EnableSmartCache),
+		DisableCookies:            types.BoolValue(resource.DisableCookies),
+		OriginHostHeader:          types.StringPointerValue(ifEmptyThenNil(resource.OriginHostHeader)),
+		ErrorPageEnableCustomCode: types.BoolValue(resource.ErrorPageEnableCustomCode),
+		ErrorPageCustomCode:       types.StringValue(ifEmptyThenNil(resource.ErrorPageCustomCode)),
 	}
 }
 
 func PullzoneResourceModelToPullzone(resource model.PullzoneResourceModel) Pullzone {
 	return Pullzone{
-		Id:               resource.Id.ValueInt64(),
-		Name:             resource.Name.ValueString(),
-		OriginType:       resource.OriginType.ValueInt64(),
-		StorageZoneId:    resource.StorageZoneId.ValueInt64Pointer(),
-		OriginUrl:        resource.OriginUrl.ValueStringPointer(),
-		EnableSmartCache: resource.EnableSmartCache.ValueBool(),
-		DisableCookies:   resource.DisableCookies.ValueBool(),
-		OriginHostHeader: resource.OriginHostHeader.ValueStringPointer(),
-		EnableTLS1:       false,
-		EnableTLS1_1:     false,
+		Id:                        resource.Id.ValueInt64(),
+		Name:                      resource.Name.ValueString(),
+		OriginType:                resource.OriginType.ValueInt64(),
+		StorageZoneId:             resource.StorageZoneId.ValueInt64Pointer(),
+		OriginUrl:                 resource.OriginUrl.ValueStringPointer(),
+		EnableSmartCache:          resource.EnableSmartCache.ValueBool(),
+		DisableCookies:            resource.DisableCookies.ValueBool(),
+		OriginHostHeader:          resource.OriginHostHeader.ValueStringPointer(),
+		ErrorPageEnableCustomCode: resource.ErrorPageEnableCustomCode.ValueBool(),
+		ErrorPageCustomCode:       resource.ErrorPageCustomCode.ValueString(),
+		EnableTLS1:                false,
+		EnableTLS1_1:              false,
 	}
 }
 
