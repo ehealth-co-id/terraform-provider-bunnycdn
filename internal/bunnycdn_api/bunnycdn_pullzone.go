@@ -58,7 +58,7 @@ func PullzoneToPullzoneResourceModel(resource *Pullzone) model.PullzoneResourceM
 		DisableCookies:            types.BoolValue(resource.DisableCookies),
 		OriginHostHeader:          types.StringPointerValue(ifEmptyThenNil(resource.OriginHostHeader)),
 		ErrorPageEnableCustomCode: types.BoolValue(resource.ErrorPageEnableCustomCode),
-		ErrorPageCustomCode:       types.StringValue(ifEmptyThenNil(resource.ErrorPageCustomCode)),
+		ErrorPageCustomCode:       types.StringPointerValue(ifEmptyThenNil(resource.ErrorPageCustomCode)),
 	}
 }
 
@@ -73,7 +73,7 @@ func PullzoneResourceModelToPullzone(resource model.PullzoneResourceModel) Pullz
 		DisableCookies:            resource.DisableCookies.ValueBool(),
 		OriginHostHeader:          resource.OriginHostHeader.ValueStringPointer(),
 		ErrorPageEnableCustomCode: resource.ErrorPageEnableCustomCode.ValueBool(),
-		ErrorPageCustomCode:       resource.ErrorPageCustomCode.ValueString(),
+		ErrorPageCustomCode:       resource.ErrorPageCustomCode.ValueStringPointer(),
 		EnableTLS1:                false,
 		EnableTLS1_1:              false,
 	}
