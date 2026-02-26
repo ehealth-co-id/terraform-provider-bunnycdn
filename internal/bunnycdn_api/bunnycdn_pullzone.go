@@ -33,14 +33,14 @@ type Pullzone struct {
 }
 
 func ifEmptyThenNil(value *string) *string {
-	if *value == "" {
+	if value == nil || *value == "" {
 		return nil
 	}
 	return value
 }
 
 func ifZeroThenNil(value *int64) *int64 {
-	if *value == 0 {
+	if value == nil || *value == 0 {
 		return nil
 	}
 	return value
