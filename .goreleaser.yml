@@ -1,3 +1,9 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
 builds:
   - env:
       - CGO_ENABLED=0
@@ -26,10 +32,23 @@ archives:
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
   algorithm: sha256
+
+metadata:
+  mod_timestamp: '{{ .CommitTimestamp }}'
+
 signs:
   - artifacts: checksum
-    args: ["--batch", "-u", "{{ .Env.GPG_FINGERPRINT }}", "--output", "${signature}", "--detach-sign", "${artifact}"]
+    args:
+      - "--batch"
+      - "-u"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
+
 release:
   draft: false
+
 changelog:
-  skip: true
+  disable: true
