@@ -17,6 +17,7 @@ type PullzoneResourceModel struct {
 	DisableCookies            types.Bool   `tfsdk:"disable_cookie"`
 	ErrorPageEnableCustomCode types.Bool   `tfsdk:"error_page_enable_custom_code"`
 	ErrorPageCustomCode       types.String `tfsdk:"error_page_custom_code"`
+	MiddlewareScriptId        types.Int64  `tfsdk:"middleware_script_id"`
 }
 
 type PullzoneError struct {

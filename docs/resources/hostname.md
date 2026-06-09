@@ -18,6 +18,8 @@ resource "bunnycdn_hostname" "test" {
   hostname = "test.ehealth.co.id"
   enable_ssl = true
   force_ssl = false
+  certificate = "_somebase64urlencodedcertificate_"
+  certificate_key = "_somebase64urlencodedcertificatekey_"
 }
 ```
 
@@ -31,6 +33,8 @@ resource "bunnycdn_hostname" "test" {
 
 ### Optional
 
+- `certificate` (String, Sensitive) Hostname custom certificate
+- `certificate_key` (String, Sensitive) Hostname custom certificate key
 - `enable_ssl` (Boolean) Sets enable SSL
 - `force_ssl` (Boolean) Sets force SSL
 

@@ -15,8 +15,11 @@ Pull zone resource
 ```terraform
 resource "bunnycdn_pullzone" "test" {
   name = "test-ehealth-co-id"
+  origin_type = 0
   origin_url = "https://lb.a.ehealth.id"
   origin_host_header = "test.ehealth.co.id"
+  # origin_type = 2
+  # storage_zone_id = 999999
   enable_smart_cache = true
   disable_cookie = false
 }
@@ -28,13 +31,18 @@ resource "bunnycdn_pullzone" "test" {
 ### Required
 
 - `name` (String) The name of the pull zone.
-- `origin_host_header` (String) Sets the host header that will be sent to the origin
-- `origin_url` (String) Sets the origin URL of the pull zone
 
 ### Optional
 
 - `disable_cookie` (Boolean) Sets disable cookie
 - `enable_smart_cache` (Boolean) Sets the smart cache
+- `error_page_custom_code` (String) Sets template custom error page
+- `error_page_enable_custom_code` (Boolean) Sets enable custom error page
+- `middleware_script_id` (Number) The ID of the middleware script
+- `origin_host_header` (String) Sets the host header that will be sent to the origin
+- `origin_type` (Number) Sets the origin type of the pull zone (0 = OriginUrl, 2 = StorageZone)
+- `origin_url` (String) Sets the origin URL of the pull zone
+- `storage_zone_id` (Number) The ID of the storage zone that will be used as the origin
 
 ### Read-Only
 

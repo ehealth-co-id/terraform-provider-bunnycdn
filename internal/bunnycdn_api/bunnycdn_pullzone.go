@@ -30,6 +30,7 @@ type Pullzone struct {
 	Hostnames                 []PullzoneHostname `json:"Hostnames"`
 	ErrorPageEnableCustomCode bool               `json:"ErrorPageEnableCustomCode"`
 	ErrorPageCustomCode       *string            `json:"ErrorPageCustomCode"`
+	MiddlewareScriptId        *int64             `json:"MiddlewareScriptId"`
 }
 
 func ifEmptyThenNil(value *string) *string {
@@ -59,6 +60,7 @@ func PullzoneToPullzoneResourceModel(resource *Pullzone) model.PullzoneResourceM
 		OriginHostHeader:          types.StringPointerValue(ifEmptyThenNil(resource.OriginHostHeader)),
 		ErrorPageEnableCustomCode: types.BoolValue(resource.ErrorPageEnableCustomCode),
 		ErrorPageCustomCode:       types.StringPointerValue(ifEmptyThenNil(resource.ErrorPageCustomCode)),
+		MiddlewareScriptId:        types.Int64PointerValue(ifZeroThenNil(resource.MiddlewareScriptId)),
 	}
 }
 
@@ -74,6 +76,7 @@ func PullzoneResourceModelToPullzone(resource model.PullzoneResourceModel) Pullz
 		OriginHostHeader:          resource.OriginHostHeader.ValueStringPointer(),
 		ErrorPageEnableCustomCode: resource.ErrorPageEnableCustomCode.ValueBool(),
 		ErrorPageCustomCode:       resource.ErrorPageCustomCode.ValueStringPointer(),
+		MiddlewareScriptId:        resource.MiddlewareScriptId.ValueInt64Pointer(),
 		EnableTLS1:                false,
 		EnableTLS1_1:              false,
 	}

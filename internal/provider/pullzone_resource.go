@@ -94,6 +94,11 @@ func (r *PullzoneResource) Schema(ctx context.Context, req resource.SchemaReques
 				Optional:            true,
 				PlanModifiers:       []planmodifier.String{},
 			},
+			"middleware_script_id": schema.Int64Attribute{
+				MarkdownDescription: "The ID of the middleware script",
+				Optional:            true,
+				PlanModifiers:       []planmodifier.Int64{},
+			},
 			"id": schema.Int64Attribute{
 				Computed:            true,
 				MarkdownDescription: "The ID of the pull zone",
